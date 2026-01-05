@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YHY Timer</title>
+
+<style>
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Arial;
+  background: linear-gradient(180deg,#0d47a1,#1976d2,#42a5f5);
+  color:white;
+}
+
+header{
+  text-align:center;
+  padding:25px 15px;
+  font-size:34px;
+  font-weight:900;
+  letter-spacing:2px;
+}
+
+.app{
+  max-width:420px;
+  margin:auto;
+  padding:20px;
+}
+
+.label{
+  font-weight:800;
+  margin:12px 0 6px;
+}
+
+input, select, button{
+  width:100%;
+  padding:16px;
+  border:none;
+  border-radius:18px;
+  font-size:18px;
+}
+
+#name,#date{
+  background:#ffeb3b;
+  font-weight:900;
+}
+
+button{
+  margin-top:15px;
+  background:#00e676;
+  font-weight:900;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.event{
+  margin-top:18px;
+  padding:22px;
+  border-radius:24px;
+  text-align:center;
+  font-weight:900;
+  color:black;
+  position:relative;
+}
+
+.event.white{ background:white; }
+.event.yellow{ background:#ffeb3b; }
+.event.green{ background:#a5f5c6; }
+
+.event small{
+  display:block;
+  font-size:32px;
+  margin-top:10px;
+}
+
+.delete{
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:#ff5252;
+  color:white;
+  border:none;
+  border-radius:50%;
+  width:38px;
+  height:38px;
+  font-size:20px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>YHY TIMER ⏳</header>
+
+<div class="app">
+
+  <div class="label">📝 اسم الحدث</div>
+  <input id="name" placeholder="اكتب اسم الحدث">
+
+  <div class="label">📅 أدخل تاريخ الحدث</div>
+  <input id="date" type="datetime-local">
+
+  <div class="label">🎨 اختر أيقونة</div>
+  <select id="icon">
+    <option>❤️</option>
+    <option>🌙</option>
+    <option>🎁</option>
+    <option>😎</option>
+    <option>✨</option>
+    <option>🫶</option>
+  </select>
+
+  <button onclick="addEvent()">➕ إضافة حدث</button>
+
+  <div id="events"></div>
+</div>
+
+<script>
+let events = JSON.parse(localStorage.getItem("events") || "[]");
+
+function save(){
+  localStorage.setItem("events", JSON.stringify(events));
+}
+
+function colorByTime(ms){
+  const hours = ms / 3600000;
+  if(hours <= 24) return "green";     // قريب جدًا
+  if(hours <= 168) return "yellow";   // قريب
+  return "white";                     // بعيد
+}
+
+function render(){
+  const box = document.getElementById("events");
+  box.innerHTML="";
+
+  events.forEach((e,i)=>{
+    const diff = new Date(e.date) - new Date();
+    if(diff <= 0) return;
+
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+
+    const div = document.createElement("div");
+    div.className = "event " + colorByTime(diff);
+
+    div.innerHTML = `
+      <button class="delete" onclick="removeEvent(${i})">🗑️</button>
+      ${e.icon} ${e.name}
+      <small>${days} يوم • ${hours} ساعة</small>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function addEvent(){
+  const name = nameInput.value.trim();
+  const date = dateInput.value;
+  const icon = iconSelect.value;
+
+  if(!name || !date){
+    alert("أدخل اسم وتاريخ الحدث");
+    return;
+  }
+
+  events.push({name,date,icon});
+  save();
+  render();
+
+  nameInput.value="";
+  dateInput.value="";
+}
+
+function removeEvent(i){
+  if(confirm("حذف الحدث؟")){
+    events.splice(i,1);
+    save();
+    render();
+  }
+}
+
+const nameInput = document.getElementById("name");
+const dateInput = document.getElementById("date");
+const iconSelect = document.getElementById("icon");
+
+render();
+setInterval(render,1000);
+
+// 🔔 تنبيهات
+if("Notification" in window){
+  Notification.requestPermission();
+}
+</script>
+
+</body>
+</html>
